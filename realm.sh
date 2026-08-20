@@ -6,8 +6,8 @@
 CURRENT_VERSION="1.1.1"
 UPDATE_URL="https://raw.githubusercontent.com/qqrrooty/EZrealm/main/realm.sh"
 VERSION_CHECK_URL="https://raw.githubusercontent.com/qqrrooty/EZrealm/main/version.txt"
-REALM_DIR="/root/realm"
-CONFIG_FILE="$REALM_DIR/config.toml"
+REALM_DIR="/opt/realm"
+CONFIG_FILE="/root/realm/config.toml"
 SERVICE_FILE="/etc/systemd/system/realm.service"
 LOG_FILE="/var/log/realm_manager.log"
 
