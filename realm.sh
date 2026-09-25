@@ -198,6 +198,7 @@ deploy_realm() {
 
     # 初始化配置文件
     if [ ! -f "$CONFIG_FILE" ]; then
+        mkdir -p "$(dirname "$CONFIG_FILE")"
         echo -e "[network]\nno_tcp = false\nuse_udp = true" > "$CONFIG_FILE"
     fi
 
@@ -231,7 +232,7 @@ show_rules() {
   echo -e "${NC}${BLUE}---------------------------------------------------------------------------------------------------------${NC}"
     local IFS=$'\n' # 设置IFS仅以换行符作为分隔符
     # 搜索所有包含 listen 的行，表示转发规则的起始行
-    local lines=($(grep -n 'listen =' /root/realm/config.toml))
+    local lines=($(grep -n 'listen =' $CONFIG_FILE))
     
     if [ ${#lines[@]} -eq 0 ]; then
   echo -e "没有发现任何转发规则。"
@@ -241,9 +242,9 @@ show_rules() {
     local index=1
     for line in "${lines[@]}"; do
         local line_number=$(echo $line | cut -d ':' -f 1)
-        local listen_info=$(sed -n "${line_number}p" /root/realm/config.toml | cut -d '"' -f 2)
-        local remote_info=$(sed -n "$((line_number + 1))p" /root/realm/config.toml | cut -d '"' -f 2)
-        local remark=$(sed -n "$((line_number-1))p" /root/realm/config.toml | grep "^# 备注:" | cut -d ':' -f 2)
+        local listen_info=$(sed -n "${line_number}p" $CONFIG_FILE | cut -d '"' -f 2)
+        local remote_info=$(sed -n "$((line_number + 1))p" $CONFIG_FILE | cut -d '"' -f 2)
+        local remark=$(sed -n "$((line_number-1))p" $CONFIG_FILE | grep "^# 备注:" | cut -d ':' -f 2)
         
         local listen_ip_port=$listen_info
         local remote_ip_port=$remote_info
@@ -342,7 +343,7 @@ delete_rule() {
   echo -e "${NC}${BLUE}---------------------------------------------------------------------------------------------------------${NC}"
     local IFS=$'\n' # 设置IFS仅以换行符作为分隔符
     # 搜索所有包含 [[endpoints]] 的行，表示转发规则的起始行
-    local lines=($(grep -n '^\[\[endpoints\]\]' /root/realm/config.toml))
+    local lines=($(grep -n '^\[\[endpoints\]\]' $CONFIG_FILE))
     
     if [ ${#lines[@]} -eq 0 ]; then
         echo "没有发现任何转发规则。"
@@ -356,9 +357,9 @@ delete_rule() {
         local listen_line=$((line_number + 2))
         local remote_line=$((line_number + 3))
 
-        local remark=$(sed -n "${remark_line}p" /root/realm/config.toml | grep "^# 备注:" | cut -d ':' -f 2)
-        local listen_info=$(sed -n "${listen_line}p" /root/realm/config.toml | cut -d '"' -f 2)
-        local remote_info=$(sed -n "${remote_line}p" /root/realm/config.toml | cut -d '"' -f 2)
+        local remark=$(sed -n "${remark_line}p" $CONFIG_FILE | grep "^# 备注:" | cut -d ':' -f 2)
+        local listen_info=$(sed -n "${listen_line}p" $CONFIG_FILE | cut -d '"' -f 2)
+        local remote_info=$(sed -n "${remote_line}p" $CONFIG_FILE | cut -d '"' -f 2)
 
         local listen_ip_port=$listen_info
         local remote_ip_port=$remote_info
@@ -390,21 +391,21 @@ delete_rule() {
   local start_line=$(echo $chosen_line | cut -d ':' -f 1)
 
   # 找到下一个 [[endpoints]] 行，确定删除范围的结束行
-  local next_endpoints_line=$(grep -n '^\[\[endpoints\]\]' /root/realm/config.toml | grep -A 1 "^$start_line:" | tail -n 1 | cut -d ':' -f 1)
+  local next_endpoints_line=$(grep -n '^\[\[endpoints\]\]' $CONFIG_FILE | grep -A 1 "^$start_line:" | tail -n 1 | cut -d ':' -f 1)
 
   if [ -z "$next_endpoints_line" ] || [ "$next_endpoints_line" -le "$start_line" ]; then
     # 如果没有找到下一个 [[endpoints]]，则删除到文件末尾
-    end_line=$(wc -l < /root/realm/config.toml)
+    end_line=$(wc -l < $CONFIG_FILE)
   else
     # 如果找到了下一个 [[endpoints]]，则删除到它的前一行
     end_line=$((next_endpoints_line - 1))
   fi
 
   # 使用 sed 删除指定行范围的内容
-  sed -i "${start_line},${end_line}d" /root/realm/config.toml
+  sed -i "${start_line},${end_line}d" $CONFIG_FILE
 
   # 检查并删除可能多余的空行
-  sed -i '/^\s*$/d' /root/realm/config.toml
+  sed -i '/^\s*$/d' $CONFIG_FILE
 
   echo "转发规则及其备注已删除。"
 
@@ -534,7 +535,7 @@ main_menu() {
         echo -e "                 2.新增了自动更新脚本"
         echo -e "                 3.realm支持检测最新版本"
         echo -e "    (1)安装前请先更新系统软件包，缺少命令可能无法安装"
-        echo -e "    (2)如果启动失败请检查 /root/realm/config.toml下有无多余配置或者卸载后重新配置"
+        echo -e "    (2)如果启动失败请检查 $CONFIG_FILE下有无多余配置或者卸载后重新配置"
         echo -e "    (3)该脚本只在debian系统下测试，未做其他系统适配，安装命令有别，可能无法启动。如若遇到问题，请自行解决"
         echo -e "    仓库：https://github.com/qqrrooty/EZrealm"
         echo -e "    2025/4/1 更新：有人反馈该新版本添加规则过多后无法启动，如果遇到问题，可以尝试回退老版本（大概率是备注问题）"
