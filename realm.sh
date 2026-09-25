@@ -180,7 +180,7 @@ deploy_realm() {
     fi
 
     # 下载最新版本
-    DOWNLOAD_URL="https://github.com/zhboner/realm/releases/download/v${LATEST_VERSION}/realm-x86_64-unknown-linux-gnu.tar.gz"
+    DOWNLOAD_URL="https://github.com/zhboner/realm/releases/download/v${LATEST_VERSION}/realm-x86_64-unknown-linux-musl.tar.gz"
     echo -e "${BLUE}▶ 正在下载 Realm v${LATEST_VERSION}...${NC}"
     if ! wget --show-progress -qO realm.tar.gz "$DOWNLOAD_URL"; then
         log "安装失败：下载错误"
